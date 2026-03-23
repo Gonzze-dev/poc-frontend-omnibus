@@ -1,0 +1,72 @@
+<div class="ticket-card">
+  <div class="card-header">
+    <div class="header-info">
+      <h3 class="enterprise">{{ pasaje().enterprise }}</h3>
+      <p class="terminal">{{ pasaje().bus_terminal_name }}</p>
+    </div>
+    <span class="active-badge" title="Pasaje activo"></span>
+  </div>
+
+  @if (arrival(); as a) {
+    <div class="arrival-banner">
+      <span class="arrival-icon">🚌</span>
+      <div class="arrival-text">
+        <strong>El colectivo llegó</strong>
+        <span>Andén {{ a.anden }}</span>
+      </div>
+    </div>
+  }
+
+  <div class="card-body">
+    <div class="detail-row">
+      <span class="label">Ticket</span>
+      <span class="value">{{ pasaje().ticket }}</span>
+    </div>
+    <div class="detail-row">
+      <span class="label">Pasajero</span>
+      <span class="value">{{ pasaje().name }}</span>
+    </div>
+    <div class="cities-section">
+      <span class="label">Destinos</span>
+      <div class="cities-list">
+        @for (city of pasaje().trip_city; track city.order) {
+          <div class="city-wrapper">
+            <button
+              class="city-chip"
+              [class.selected]="selectedCityOrder() === city.order"
+              (click)="toggleCity(city.order)"
+            >
+              {{ city.city_name }}
+            </button>
+            @if (selectedCityOrder() === city.order) {
+              <div class="city-dates">
+                <div class="date-row">
+                  <span class="date-label">Salida</span>
+                  <span class="date-value">{{ city.start_date | date:'dd/MM/yyyy HH:mm' }}</span>
+                </div>
+                <div class="date-row">
+                  <span class="date-label">Llegada</span>
+                  <span class="date-value">{{ city.end_date | date:'dd/MM/yyyy HH:mm' }}</span>
+                </div>
+              </div>
+            }
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+
+  @if (arrival()) {
+    <div class="map-section">
+      <div class="map-header">
+        <span class="label">Ubicación del colectivo</span>
+        @if (mapsUrl(); as url) {
+          <a class="directions-link" [href]="url" target="_blank" rel="noopener">
+            Ver en Maps
+          </a>
+        }
+      </div>
+      <div class="map-wrapper" #mapEl></div>
+    </div>
+  }
+</div>

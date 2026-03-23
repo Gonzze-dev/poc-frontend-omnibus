@@ -1,0 +1,37 @@
+<div class="search-page">
+  <div class="search-container">
+    <h1 class="title">Consultar Pasaje</h1>
+    <p class="subtitle">Ingresá el número de ticket para ver la información del pasaje</p>
+
+    <div class="search-box">
+      <input
+        type="text"
+        class="search-input"
+        placeholder="Ej: FLE-002-2026"
+        [ngModel]="ticketInput()"
+        (ngModelChange)="ticketInput.set($event)"
+        (keydown.enter)="search()"
+      />
+      <button class="search-btn" (click)="search()" [disabled]="loading()">
+        @if (loading()) {
+          <span class="spinner"></span>
+        } @else {
+          Buscar
+        }
+      </button>
+    </div>
+
+    @if (errorMessage(); as msg) {
+      <div class="error-banner">
+        <span class="error-icon">⚠</span>
+        {{ msg }}
+      </div>
+    }
+  </div>
+
+  @if (pasaje(); as p) {
+    <div class="result-section">
+      <app-ticket-card [pasaje]="p" [arrival]="realtimeService.busArrival()" />
+    </div>
+  }
+</div>

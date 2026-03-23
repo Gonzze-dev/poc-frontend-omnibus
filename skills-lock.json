@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "skills": {
+    "angular-best-practices-v20": {
+      "source": "develite98/angular-best-practices",
+      "sourceType": "github",
+      "computedHash": "2928b73cbf55cfdc4ba7bc4c4dfd13acbcc62dee00d27b4704e9b62eb1cb8323"
+    }
+  }
+}
