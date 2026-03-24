@@ -1,0 +1,10 @@
+<nav class="navbar">
+  <span class="navbar-brand">Omnibus</span>
+
+  <div class="navbar-end">
+    @if (user(); as u) {
+      <span class="navbar-user">{{ u.first_name }} {{ u.last_name }}</span>
+    }
+    <button class="btn-logout" (click)="logout()">Cerrar sesión</button>
+  </div>
+</nav>

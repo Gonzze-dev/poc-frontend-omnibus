@@ -1,4 +1,4 @@
 export const APP_CONFIG = {
-  backendUrl: 'http://localhost:4989',
+  backendUrl: '',
   realtimeUrl: 'http://localhost:4988',
 };
