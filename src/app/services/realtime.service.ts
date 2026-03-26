@@ -1,6 +1,7 @@
 import { Injectable, signal } from '@angular/core';
 import * as signalR from '@microsoft/signalr';
 import { BusArrival } from '../models/pasaje.model';
+import { PassengerNotification, PassengerNotificationTypeEnum } from '../models/passenger-notification.model';
 import { APP_CONFIG } from '../config';
 
 @Injectable({ providedIn: 'root' })
@@ -22,16 +23,27 @@ export class RealtimeService {
     this.connection.onreconnected(() => this.connected.set(true));
     this.connection.onclose(() => this.connected.set(false));
 
-    this.connection.on('receiveNotification', (data: BusArrival) => {
-      console.log('receiveNotification:', data);
-      this.busArrival.set(data);
+    this.connection.on('receiveNotification', (msg: PassengerNotification) => {
+      console.log('receiveNotification:', msg);
+
+      if (msg?.type === PassengerNotificationTypeEnum.BUS_ARRIVAL) {
+        this.busArrival.set(msg.payload as BusArrival);
+      }
     });
 
     await this.connection.start();
     this.connected.set(true);
   }
 
-  async joinGroup(idGroup: string): Promise<void> {
+  async joinGroup(terminalUuid: string, busLicensePlate: string): Promise<void> {
+    const terminal = terminalUuid.trim();
+    const plate = busLicensePlate.trim();
+    if (!terminal || !plate) {
+      throw new Error('Se requieren terminalUuid y patente para unirse al canal.');
+    }
+
+    const groupId = `${plate}:${terminal}`;
+
     if (!this.connection) {
       await this.start();
     }
@@ -40,8 +52,8 @@ export class RealtimeService {
       await this.leaveCurrentGroup();
     }
 
-    await this.connection!.invoke('JoinFrontend', idGroup);
-    this.currentGroup = idGroup;
+    await this.connection!.invoke('JoinFrontend', groupId);
+    this.currentGroup = groupId;
   }
 
   private async leaveCurrentGroup(): Promise<void> {

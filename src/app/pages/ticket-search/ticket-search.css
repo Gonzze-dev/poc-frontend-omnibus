@@ -22,6 +22,75 @@
   font-size: 0.95rem;
 }
 
+/* ── Terminal selector ── */
+
+.terminal-section {
+  margin-bottom: 20px;
+}
+
+.field-label {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #334155;
+  margin-bottom: 8px;
+}
+
+.filter-row {
+  margin-bottom: 8px;
+}
+
+.filter-input {
+  width: 100%;
+  padding: 10px 14px;
+  border: 2px solid #e2e8f0;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  color: #1e293b;
+  background: #ffffff;
+  outline: none;
+  transition: border-color 0.2s ease;
+  box-sizing: border-box;
+}
+
+.filter-input::placeholder {
+  color: #94a3b8;
+}
+
+.filter-input:focus {
+  border-color: #6366f1;
+}
+
+.terminal-select {
+  width: 100%;
+  padding: 12px 14px;
+  border: 2px solid #e2e8f0;
+  border-radius: 10px;
+  font-size: 0.95rem;
+  color: #1e293b;
+  background: #ffffff;
+  outline: none;
+  cursor: pointer;
+  transition: border-color 0.2s ease;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2364748b' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  box-sizing: border-box;
+}
+
+.terminal-select:focus {
+  border-color: #6366f1;
+}
+
+.no-results {
+  margin: 8px 0 0;
+  font-size: 0.85rem;
+  color: #94a3b8;
+}
+
+/* ── Search box ── */
+
 .search-box {
   display: flex;
   gap: 10px;

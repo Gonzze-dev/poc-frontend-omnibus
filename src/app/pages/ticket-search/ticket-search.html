@@ -1,7 +1,38 @@
 <div class="search-page">
   <div class="search-container">
     <h1 class="title">Consultar Pasaje</h1>
-    <p class="subtitle">Ingresá el número de ticket para ver la información del pasaje</p>
+    <p class="subtitle">Seleccioná la terminal y el número de ticket para ver la información del pasaje</p>
+
+    <div class="terminal-section">
+      <label class="field-label">Terminal</label>
+
+      <div class="filter-row">
+        <input
+          type="text"
+          class="filter-input"
+          placeholder="Filtrar por código postal..."
+          [ngModel]="postalCodeFilter()"
+          (ngModelChange)="onPostalCodeFilterChange($event)"
+        />
+      </div>
+
+      <select
+        class="terminal-select"
+        [ngModel]="selectedTerminalUuid()"
+        (ngModelChange)="selectedTerminalUuid.set($event)"
+      >
+        <option [ngValue]="null" disabled>Seleccioná una terminal</option>
+        @for (terminal of filteredTerminals(); track terminal.uuid) {
+          <option [ngValue]="terminal.uuid">
+            {{ terminal.name }} (CP: {{ terminal.postal_code }})
+          </option>
+        }
+      </select>
+
+      @if (filteredTerminals().length === 0 && postalCodeFilter()) {
+        <p class="no-results">No se encontraron terminales con ese código postal.</p>
+      }
+    </div>
 
     <div class="search-box">
       <input
