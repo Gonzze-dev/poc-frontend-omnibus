@@ -37,3 +37,27 @@ export interface LoginResponse {
   access_token: string;
   user: User;
 }
+
+export interface ForgotPasswordRequest {
+  email: string;
+}
+
+/** Respuesta normalizada de POST /api/auth/forgot-password */
+export interface ForgotPasswordResponse {
+  message: string;
+}
+
+export interface ResetPasswordRequest {
+  password: string;
+}
+
+/** Respuesta normalizada de GET /api/auth/validate-recovery-token */
+export interface ValidateRecoveryTokenResponse {
+  valid: boolean;
+  expiresAt: string | null;
+}
+
+/** Respuesta de POST /api/auth/reset-password */
+export interface ResetPasswordResponse {
+  message: string;
+}

@@ -1,9 +1,19 @@
 import { computed, inject, Injectable, signal } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Router } from '@angular/router';
-import { Observable, tap } from 'rxjs';
+import { map, Observable, tap } from 'rxjs';
 import { APP_CONFIG } from '../config';
-import { LoginRequest, LoginResponse, User, UserMe } from '../models/auth.model';
+import {
+  ForgotPasswordRequest,
+  ForgotPasswordResponse,
+  LoginRequest,
+  LoginResponse,
+  ResetPasswordRequest,
+  ResetPasswordResponse,
+  User,
+  UserMe,
+  ValidateRecoveryTokenResponse,
+} from '../models/auth.model';
 
 const TOKEN_KEY = 'access_token';
 const USER_KEY = 'auth_user';
@@ -99,4 +109,76 @@ export class AuthService {
       return null;
     }
   }
+
+  forgotPassword(email: string): Observable<ForgotPasswordResponse> {
+    const body: ForgotPasswordRequest = { email: email.trim() };
+    return this.http
+      .post<Record<string, unknown>>(`${this.authUrl}/forgot-password`, body)
+      .pipe(map((raw) => normalizeForgotPasswordResponse(raw)));
+  }
+
+  validateRecoveryToken(token: string): Observable<ValidateRecoveryTokenResponse> {
+    const headers = recoveryBearerHeaders(token);
+    return this.http
+      .post<Record<string, unknown>>(
+        `${this.authUrl}/validate-recovery-token`,
+        null,
+        { headers },
+      )
+      .pipe(map((raw) => normalizeValidateRecoveryTokenResponse(raw)));
+  }
+
+  resetPassword(
+    token: string,
+    password: string,
+  ): Observable<ResetPasswordResponse> {
+    const headers = recoveryBearerHeaders(token);
+    const body: ResetPasswordRequest = { password };
+    return this.http
+      .post<Record<string, unknown>>(`${this.authUrl}/reset-password`, body, {
+        headers,
+      })
+      .pipe(map((raw) => normalizeResetPasswordResponse(raw)));
+  }
+}
+
+function recoveryBearerHeaders(token: string): HttpHeaders {
+  return new HttpHeaders({
+    Authorization: `Bearer ${token.trim()}`,
+  });
+}
+
+function normalizeForgotPasswordResponse(
+  raw: Record<string, unknown>,
+): ForgotPasswordResponse {
+  const message =
+    (typeof raw['message'] === 'string' ? raw['message'] : null) ??
+    (typeof raw['Message'] === 'string' ? raw['Message'] : null) ??
+    '';
+  return { message };
+}
+
+function normalizeValidateRecoveryTokenResponse(
+  raw: Record<string, unknown>,
+): ValidateRecoveryTokenResponse {
+  const valid = raw['valid'] === true || raw['Valid'] === true;
+  const exp = raw['expires_at'] ?? raw['ExpiresAt'];
+  let expiresAt: string | null = null;
+  if (typeof exp === 'string') {
+    expiresAt = exp;
+  } else if (exp != null && typeof exp === 'object' && 'Time' in (exp as object)) {
+    const t = (exp as { Time?: string }).Time;
+    expiresAt = typeof t === 'string' ? t : null;
+  }
+  return { valid, expiresAt };
+}
+
+function normalizeResetPasswordResponse(
+  raw: Record<string, unknown>,
+): ResetPasswordResponse {
+  const message =
+    (typeof raw['message'] === 'string' ? raw['message'] : null) ??
+    (typeof raw['Message'] === 'string' ? raw['Message'] : null) ??
+    '';
+  return { message };
 }
