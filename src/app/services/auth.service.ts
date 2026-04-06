@@ -3,7 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { Observable, tap } from 'rxjs';
 import { APP_CONFIG } from '../config';
-import { LoginRequest, LoginResponse, User } from '../models/auth.model';
+import { LoginRequest, LoginResponse, User, UserMe } from '../models/auth.model';
 
 const TOKEN_KEY = 'access_token';
 const USER_KEY = 'auth_user';
@@ -13,6 +13,7 @@ export class AuthService {
   private readonly http = inject(HttpClient);
   private readonly router = inject(Router);
   private readonly authUrl = `${APP_CONFIG.backendUrl}/api/auth`;
+  private readonly usersUrl = `${APP_CONFIG.backendUrl}/api/users`;
 
   private readonly _accessToken = signal<string | null>(this.loadToken());
   private readonly _user = signal<User | null>(this.loadUser());
@@ -62,6 +63,27 @@ export class AuthService {
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(USER_KEY);
     this.router.navigate(['/login']);
+  }
+
+  /** GET /api/users/me (Authorization vía interceptor). Actualiza usuario en memoria y localStorage. */
+  syncUserFromMe(): Observable<UserMe> {
+    return this.http.get<UserMe>(`${this.usersUrl}/me`).pipe(
+      tap((me) => {
+        const user: User = {
+          uuid: me.uuid,
+          first_name: me.first_name,
+          last_name: me.last_name,
+          email: me.email,
+          dni: me.dni,
+          rol: me.rol,
+          created_at: me.created_at,
+          updated_at: me.updated_at,
+          terminals: me.terminals,
+        };
+        this._user.set(user);
+        localStorage.setItem(USER_KEY, JSON.stringify(user));
+      }),
+    );
   }
 
   private loadToken(): string | null {

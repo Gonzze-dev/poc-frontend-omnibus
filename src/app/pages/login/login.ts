@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
+import { catchError, of, switchMap } from 'rxjs';
 import { AuthService } from '../../services/auth.service';
 
 @Component({
@@ -34,7 +35,14 @@ export class LoginPage {
 
     const { email, password } = this.form.getRawValue();
 
-    this.auth.login({ email, password }).subscribe({
+    this.auth
+      .login({ email, password })
+      .pipe(
+        switchMap(() =>
+          this.auth.syncUserFromMe().pipe(catchError(() => of(null))),
+        ),
+      )
+      .subscribe({
       next: () => {
         this.loading.set(false);
         this.router.navigate(['/']);

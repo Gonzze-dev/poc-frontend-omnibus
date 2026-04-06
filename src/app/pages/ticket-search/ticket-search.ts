@@ -1,6 +1,8 @@
 import { ChangeDetectionStrategy, Component, computed, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { catchError, of } from 'rxjs';
 import { TicketCard } from '../../components/ticket-card/ticket-card';
+import { AuthService } from '../../services/auth.service';
 import { PasajeService } from '../../services/pasaje.service';
 import { RealtimeService } from '../../services/realtime.service';
 import { TerminalService } from '../../services/terminal.service';
@@ -17,6 +19,7 @@ const TICKET_PATTERN = /^[A-Za-z]+-\d+-\d+$/;
   styleUrl: './ticket-search.css',
 })
 export class TicketSearch implements OnInit {
+  private readonly auth = inject(AuthService);
   private readonly pasajeService = inject(PasajeService);
   private readonly terminalService = inject(TerminalService);
   protected readonly realtimeService = inject(RealtimeService);
@@ -48,6 +51,17 @@ export class TicketSearch implements OnInit {
       next: (data) => this.terminals.set(data),
       error: () => console.error('No se pudieron cargar las terminales.'),
     });
+
+    if (this.auth.isAuthenticated()) {
+      this.auth
+        .syncUserFromMe()
+        .pipe(catchError(() => of(null)))
+        .subscribe(() => {
+          if (this.auth.user()?.rol === 'admin') {
+            void this.realtimeService.start();
+          }
+        });
+    }
   }
 
   onPostalCodeFilterChange(value: string): void {

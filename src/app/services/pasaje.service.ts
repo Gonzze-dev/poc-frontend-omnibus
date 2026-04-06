@@ -6,7 +6,7 @@ import { APP_CONFIG } from '../config';
 @Injectable({ providedIn: 'root' })
 export class PasajeService {
   private readonly http = inject(HttpClient);
-  private readonly baseUrl = `${APP_CONFIG.backendUrl}/pasajes`;
+  private readonly baseUrl = `${APP_CONFIG.backendUrl}/bus_tickets`;
 
   getByTicket(ticket: string) {
     return this.http.get<Pasaje>(`${this.baseUrl}/${ticket}`);

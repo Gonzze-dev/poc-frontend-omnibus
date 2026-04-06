@@ -1,16 +1,26 @@
-import { Injectable, signal } from '@angular/core';
+import { inject, Injectable, signal } from '@angular/core';
 import * as signalR from '@microsoft/signalr';
+import { firstValueFrom } from 'rxjs';
 import { BusArrival } from '../models/pasaje.model';
 import { PassengerNotification, PassengerNotificationTypeEnum } from '../models/passenger-notification.model';
 import { APP_CONFIG } from '../config';
+import { AuthService } from './auth.service';
 
 const GLOBAL_SIGNALR_GROUP = 'global';
 
+/** Grupo SignalR por terminal para rol admin: `admin` + uuid de terminal. */
+export function adminTerminalGroupId(terminalUuid: string): string {
+  return `admin/${terminalUuid.trim()}`;
+}
+
 @Injectable({ providedIn: 'root' })
 export class RealtimeService {
+  private readonly auth = inject(AuthService);
+
   private connection: signalR.HubConnection | null = null;
   private currentPlateTerminalGroup: string | null = null;
   private currentTerminalGroup: string | null = null;
+  private adminTerminalGroupIds: string[] = [];
 
   readonly connected = signal(false);
   readonly busArrival = signal<BusArrival | null>(null);
@@ -36,14 +46,21 @@ export class RealtimeService {
         this.busArrival.set(msg.payload as BusArrival);
       }else if (msg?.type === PassengerNotificationTypeEnum.LOCAL) {
         console.log('local:', msg.payload);
-      }else if (msg?.type === PassengerNotificationTypeEnum.GLOBAL) {
+      } else if (msg?.type === PassengerNotificationTypeEnum.BUS_DELAY) {
+        console.log('bus delay:', msg.payload);
+      }
+      else if (msg?.type === PassengerNotificationTypeEnum.GLOBAL) {
         console.log('global:', msg.payload);
+      }
+      else if (msg?.type === PassengerNotificationTypeEnum.CAMERA) {
+        console.log('camera:', msg.payload);
       }
     });
 
     await this.connection.start();
     this.connected.set(true);
     await this.connection.invoke('JoinFrontend', GLOBAL_SIGNALR_GROUP);
+    await this.syncAdminTerminalGroupsFromApi();
   }
 
   async joinGroup(terminalUuid: string, busLicensePlate: string): Promise<void> {
@@ -74,6 +91,9 @@ export class RealtimeService {
     if (!this.connection) return;
     try {
       await this.connection.invoke('JoinFrontend', GLOBAL_SIGNALR_GROUP);
+      for (const id of this.adminTerminalGroupIds) {
+        await this.connection.invoke('JoinFrontend', id);
+      }
       if (this.currentPlateTerminalGroup) {
         await this.connection.invoke('JoinFrontend', this.currentPlateTerminalGroup);
       }
@@ -83,6 +103,45 @@ export class RealtimeService {
     } catch {
       // Hub no disponible o método distinto; no bloquear la UI
     }
+  }
+
+  private async syncAdminTerminalGroupsFromApi(): Promise<void> {
+    if (!this.connection || !this.auth.accessToken()) return;
+    try {
+      const me = await firstValueFrom(this.auth.syncUserFromMe());
+      if (me.rol !== 'admin' || !me.terminals?.length) {
+        await this.clearAdminTerminalGroups();
+        return;
+      }
+      const ids = me.terminals.map((t) => adminTerminalGroupId(t.uuid));
+      await this.setAdminTerminalGroups(ids);
+    } catch {
+      // Sin sesión o /me no disponible
+    }
+  }
+
+  private async setAdminTerminalGroups(groupIds: string[]): Promise<void> {
+    if (!this.connection) return;
+    for (const id of this.adminTerminalGroupIds) {
+      try {
+        await this.connection.invoke('LeaveFrontend', id);
+      } catch {
+        // El servidor puede no tener LeaveFrontend
+      }
+    }
+    this.adminTerminalGroupIds = [];
+    for (const id of groupIds) {
+      try {
+        await this.connection.invoke('JoinFrontend', id);
+        this.adminTerminalGroupIds.push(id);
+      } catch {
+        // Hub no disponible
+      }
+    }
+  }
+
+  private async clearAdminTerminalGroups(): Promise<void> {
+    await this.setAdminTerminalGroups([]);
   }
 
   private async leaveCurrentGroups(): Promise<void> {

@@ -10,6 +10,7 @@ export enum PassengerNotificationTypeEnum {
   BUS_DELAY = 'BUS_DELAY',
   LOCAL = 'LOCAL',
   GLOBAL = 'GLOBAL',
+  CAMERA = 'CAMERA',
 }
 
 /** Mensaje recibido por SignalR: tipo + carga útil según el tipo. */
