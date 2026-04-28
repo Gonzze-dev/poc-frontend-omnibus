@@ -29,7 +29,7 @@ export class RealtimeService {
     if (this.connection) return;
 
     this.connection = new signalR.HubConnectionBuilder()
-      .withUrl(`${APP_CONFIG.realtimeUrl}/realtime`)
+      .withUrl(`${APP_CONFIG.realtimeUrl}/realtime?apiKey=${APP_CONFIG.realtimeApiKey}`)
       .withAutomaticReconnect()
       .build();
 
